@@ -1,0 +1,23 @@
+# 构建产物
+server/build/
+build/
+cmake-build-*/
+
+# CMake 中间文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Qt Creator 用户配置
+*.user
+*.user.*
+
+# Android 构建产物
+android-build/
+*.apk
+*.aab
+
+# 系统文件
+Thumbs.db
+Desktop.ini
+.vscode/

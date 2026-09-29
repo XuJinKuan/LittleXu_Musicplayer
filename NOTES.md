@@ -2,7 +2,7 @@
 
 > 建立时间：2026-09-28
 > 用途：记录已确认的环境结论与未决项，供跨会话延续参考。
-> 注意：本目录尚未 `git init`，无版本回退能力。
+> 注意：本目录已完成 `git init`，具备版本回退能力。
 
 ---
 
@@ -104,8 +104,20 @@ $env:JAVA_HOME='E:\JDK17'; $y = ("y`r`n" * 30); $y | & "E:\Android\Sdk\cmdline-t
 
 ---
 
-## 5. 当前项目状态
+## 5. 服务端第一版（已完成 2026-09-29）
 
-- `g:\Projects\database_project` 下仅有 `PLAN.md`（v1.0）与本文件。
-- 尚未 `git init`。
-- 后续阶段：MySQL 建库 → E-R 图 → `sql/01_schema.sql` → 服务端骨架 → 客户端骨架。
+- 目录：`server/`，18 个文件，分层 main → Router → Service → Dao → MySqlPool
+- 接口：GET `/api/health`、POST `/api/register`、POST `/api/login`、
+        GET `/api/songs`、GET `/api/songs/{id}`、POST `/api/play`、
+        GET `/api/report/monthly`
+- 关键决策：
+  - HTTP 自研（Qt 官方 Windows 包不含 Qt6HttpServer）
+  - 直连 MySQL C API（无 qsqlmysql.dll）
+  - MinGW 用 gendef + dlltool 生成 libmysql.dll.a（实测可行）
+  - 密码 SHA-256(salt + password)，与 05_seed.sql 一致
+- 运行期依赖（必须与 exe 同目录，post-build 已自动复制）：
+  libmysql.dll（lib/）、libssl-1_1-x64.dll + libcrypto-1_1-x64.dll（bin/）
+  缺失症状：进程立即退出，退出码 0xC0000135
+- 启动：设 PATH 加 Qt 与 MinGW，MUSIC_DB_PASSWORD 传 root 口令
+- 冒烟结果：health / songs / detail / login(200+401) / monthly / 404 / 405 全通过
+- 先前的"后续阶段"链条中，**建库、schema、服务端骨架均已完成**，E-R 图已放弃；下一阶段为客户端第一版
