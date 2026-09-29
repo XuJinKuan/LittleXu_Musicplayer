@@ -131,6 +131,120 @@ bool SongDao::detail(int songId, SongRecord *out)
     return true;
 }
 
+bool SongDao::addSong(const QString &title, int duration, const QString &artistName,
+                      const QString &albumName, const QString &genre, int *newSongId)
+{
+    if (newSongId) {
+        *newSongId = 0;
+    }
+
+    MySqlPool::Lease lease = MySqlPool::instance().acquire();
+    if (!lease.valid()) {
+        return false;
+    }
+
+    // 1. 确保 artist 存在，取 artist_id
+    int artistId = 0;
+    if (!artistName.isEmpty()) {
+        const QString findArtist = MySqlPool::buildSql(
+            QStringLiteral("SELECT artist_id FROM artist WHERE name = ? LIMIT 1"),
+            {artistName});
+        SqlResult artistRes;
+        QString err;
+        if (lease->select(findArtist, &artistRes, &err) && !artistRes.isEmpty()) {
+            artistId = artistRes.at(0, QStringLiteral("artist_id")).toInt();
+        } else {
+            const QString insArtist = MySqlPool::buildSql(
+                QStringLiteral("INSERT INTO artist (name) VALUES (?)"),
+                {artistName});
+            if (!lease->exec(insArtist, &err)) {
+                return false;
+            }
+            // 重新查询取 id
+            if (lease->select(findArtist, &artistRes, &err) && !artistRes.isEmpty()) {
+                artistId = artistRes.at(0, QStringLiteral("artist_id")).toInt();
+            }
+        }
+    }
+
+    // 2. 确保 album 存在，取 album_id
+    int albumId = 0;
+    if (!albumName.isEmpty()) {
+        const QString findAlbum = MySqlPool::buildSql(
+            QStringLiteral("SELECT album_id FROM album WHERE name = ? LIMIT 1"),
+            {albumName});
+        SqlResult albumRes;
+        QString err;
+        if (lease->select(findAlbum, &albumRes, &err) && !albumRes.isEmpty()) {
+            albumId = albumRes.at(0, QStringLiteral("album_id")).toInt();
+        } else {
+            const QString insAlbum = MySqlPool::buildSql(
+                QStringLiteral("INSERT INTO album (name, artist_id) VALUES (?, ?)"),
+                {albumName, artistId > 0 ? artistId : QVariant()});
+            if (!lease->exec(insAlbum, &err)) {
+                return false;
+            }
+            if (lease->select(findAlbum, &albumRes, &err) && !albumRes.isEmpty()) {
+                albumId = albumRes.at(0, QStringLiteral("album_id")).toInt();
+            }
+        }
+    }
+
+    // 3. 插入 song
+    const QString insSong = MySqlPool::buildSql(
+        QStringLiteral("INSERT INTO song (title, duration, file_path, genre, album_id) "
+                       "VALUES (?, ?, NULL, ?, ?)"),
+        {title, qMax(1, duration), genre.isEmpty() ? QStringLiteral("其他") : genre,
+         albumId > 0 ? albumId : QVariant()});
+    QString err;
+    if (!lease->exec(insSong, &err)) {
+        return false;
+    }
+
+    // 4. 取刚插入的 song_id
+    const QString lastIdSql = QStringLiteral("SELECT LAST_INSERT_ID() AS id");
+    SqlResult idRes;
+    if (!lease->select(lastIdSql, &idRes, &err) || idRes.isEmpty()) {
+        return false;
+    }
+    const int songId = idRes.at(0, QStringLiteral("id")).toInt();
+    if (songId <= 0) {
+        return false;
+    }
+
+    // 5. 关联 artist
+    if (artistId > 0) {
+        const QString insSA = MySqlPool::buildSql(
+            QStringLiteral("INSERT INTO song_artist (song_id, artist_id, role) VALUES (?, ?, '主唱')"),
+            {songId, artistId});
+        if (!lease->exec(insSA, &err)) {
+            return false;
+        }
+    }
+
+    if (newSongId) {
+        *newSongId = songId;
+    }
+    return true;
+}
+
+bool SongDao::deleteSong(int songId)
+{
+    MySqlPool::Lease lease = MySqlPool::instance().acquire();
+    if (!lease.valid()) {
+        return false;
+    }
+
+    // song_artist / play_record / favorite / playlist_song 都是 ON DELETE CASCADE
+    // 只需删 song 主表
+    const QString sql = MySqlPool::buildSql(
+        QStringLiteral("DELETE FROM song WHERE song_id = ?"),
+        {songId});
+
+    QString err;
+    return lease->exec(sql, &err);
+}
+
 bool SongDao::addPlayRecord(int userId, int songId, int playedSeconds, bool completed)
 {
     MySqlPool::Lease lease = MySqlPool::instance().acquire();
@@ -143,6 +257,26 @@ bool SongDao::addPlayRecord(int userId, int songId, int playedSeconds, bool comp
         QStringLiteral("INSERT INTO play_record (user_id, song_id, played_seconds, is_completed) "
                        "VALUES (?, ?, ?, ?)"),
         {userId, songId, qMax(0, playedSeconds), completed});
+
+    QString err;
+    return lease->exec(sql, &err);
+}
+
+bool SongDao::addOnlinePlayRecord(int userId, const QString &title, const QString &artist,
+                                  const QString &rid, int playedSeconds, bool completed)
+{
+    MySqlPool::Lease lease = MySqlPool::instance().acquire();
+    if (!lease.valid()) {
+        return false;
+    }
+
+    // 在线歌曲 song_id 为 NULL，使用 online_title / online_artist / online_rid 记录
+    const QString sql = MySqlPool::buildSql(
+        QStringLiteral("INSERT INTO play_record "
+                       "(user_id, song_id, online_title, online_artist, online_rid, "
+                       " played_seconds, is_completed) "
+                       "VALUES (?, NULL, ?, ?, ?, ?, ?)"),
+        {userId, title, artist, rid, qMax(0, playedSeconds), completed});
 
     QString err;
     return lease->exec(sql, &err);

@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     // 3) HTTP 服务
     const cfg::ServerConfig serverConfig = cfg::loadServerConfig();
     Router router;
+    router.setMediaRoot(serverConfig.mediaRoot);
     if (!router.start(serverConfig.bindAddress, serverConfig.port, &error)) {
         qCritical().noquote() << QStringLiteral("HTTP 服务启动失败：%1").arg(error);
         MySqlPool::instance().shutdown();
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
                              .arg(serverConfig.bindAddress)
                              .arg(serverConfig.port);
     qInfo().noquote() << QStringLiteral("健康检查：GET /api/health");
+    qInfo().noquote() << QStringLiteral("音频根目录：%1").arg(serverConfig.mediaRoot);
 
     const int rc = app.exec();
 

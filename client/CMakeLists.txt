@@ -6,12 +6,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick QuickControls2 Network)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick QuickControls2 Network Multimedia)
 
 qt_standard_project_setup()
 
 # ---------------------------------------------------------------------------
-# 客户端第一版：登录 + 歌曲库 + 听歌报告（不含音频播放）
+# 客户端第一版：登录 + 歌曲库 + 听歌报告 + 音频播放（QtMultimedia）
 # ---------------------------------------------------------------------------
 qt_add_executable(music_client
     src/main.cpp
@@ -31,6 +31,7 @@ target_link_libraries(music_client PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::Network
+    Qt6::Multimedia
 )
 
 # QML 文件直接打进 qrc，运行期以 qrc:/qml/xxx.qml 加载。
@@ -43,8 +44,18 @@ qt_add_resources(music_client "qml"
         qml/LoginPage.qml
         qml/MainPage.qml
         qml/LibraryPage.qml
+        qml/OnlinePage.qml
+        qml/PlayerBar.qml
         qml/SongDetailPopup.qml
         qml/ReportPage.qml
+        image/play.png
+        image/pause.png
+        image/prev.png
+        image/next.png
+        image/volume.png
+        image/voice_clicked.png
+        image/login_bg.png
+        image/logo.png
 )
 
 # 第一版保留控制台窗口，便于观察 qDebug 与运行期告警。

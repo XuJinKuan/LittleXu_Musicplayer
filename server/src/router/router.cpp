@@ -100,7 +100,18 @@ void Router::onReadyRead()
     } else {
         const ServiceResult result = route(req);
         status = result.httpStatus;
-        response = http::jsonResponse(result.body, result.httpStatus);
+        if (result.binary) {
+            response = http::makeResponse(result.httpStatus, result.binaryBody,
+                                          result.contentType, result.headers);
+        } else {
+            response = http::jsonResponse(result.body, result.httpStatus);
+        }
+    }
+
+    // route() 内部可能进入嵌套事件循环（在线音源是伪同步请求）。等待期间客户端可能
+    // 已断开并触发 cleanup()，socket 已被移出 m_buffers 并 deleteLater，不能再访问。
+    if (!m_buffers.contains(socket)) {
+        return;
     }
 
     QString logLine = QStringLiteral("%1 %2 %3 <- %4");
@@ -110,7 +121,7 @@ void Router::onReadyRead()
                      .arg(socket->peerAddress().toString());
     qInfo().noquote() << logLine;
 
-    buffer.clear();
+    m_buffers[socket].clear();
     socket->write(response);
     socket->disconnectFromHost();
 }
@@ -136,6 +147,7 @@ ServiceResult Router::route(const HttpRequest &req)
     const QString &path = req.path;
     const bool isGet = (req.method == QLatin1String("GET"));
     const bool isPost = (req.method == QLatin1String("POST"));
+    const bool isDelete = (req.method == QLatin1String("DELETE"));
 
     if (path == QLatin1String("/api/health")) {
         if (!isGet) {
@@ -172,24 +184,79 @@ ServiceResult Router::route(const HttpRequest &req)
         return m_userService.signIn(req.json);
     }
 
-    if (path == QLatin1String("/api/songs")) {
+    if (path == QLatin1String("/api/online/search")) {
         if (!isGet) {
             return methodNotAllowed();
         }
-        return m_songService.list(req.query);
+        return m_onlineService.search(req.query);
+    }
+
+    if (path == QLatin1String("/api/online/url")) {
+        if (!isGet) {
+            return methodNotAllowed();
+        }
+        return m_onlineService.url(req.query);
+    }
+
+    if (path == QLatin1String("/api/online/lrc")) {
+        if (!isGet) {
+            return methodNotAllowed();
+        }
+        return m_onlineService.lrc(req.query);
+    }
+
+    if (path == QLatin1String("/api/songs")) {
+        if (isGet) {
+            return m_songService.list(req.query);
+        }
+        if (isPost) {
+            return m_songService.addSong(req.json);
+        }
+        return methodNotAllowed();
+    }
+
+    // 必须放在 /api/songs/{id} 之前：否则 path.mid(11) 会拿到 "1/stream"
+    if (path.startsWith(QLatin1String("/api/songs/")) && path.endsWith(QLatin1String("/stream"))) {
+        if (!isGet) {
+            return methodNotAllowed();
+        }
+        const QString idStr = path.mid(11, path.size() - 11 - 7);
+        bool ok = false;
+        const int songId = idStr.toInt(&ok);
+        if (!ok || songId <= 0) {
+            return badRequest(QStringLiteral("歌曲 ID 必须是整数"));
+        }
+        return m_songService.stream(songId, req.headers.value(QStringLiteral("range")));
+    }
+
+    // 歌曲库在线播放：根据 songId 查数据库后转发酷我搜索取直链
+    if (path.startsWith(QLatin1String("/api/songs/")) && path.endsWith(QLatin1String("/online"))) {
+        if (!isGet) {
+            return methodNotAllowed();
+        }
+        const QString idStr = path.mid(11, path.size() - 11 - 7);
+        bool ok = false;
+        const int songId = idStr.toInt(&ok);
+        if (!ok || songId <= 0) {
+            return badRequest(QStringLiteral("歌曲 ID 必须是整数"));
+        }
+        return m_songService.onlineStream(songId);
     }
 
     if (path.startsWith(QLatin1String("/api/songs/"))) {
-        if (!isGet) {
-            return methodNotAllowed();
-        }
         const QString idStr = path.mid(11);
         bool ok = false;
         const int songId = idStr.toInt(&ok);
         if (!ok) {
             return badRequest(QStringLiteral("歌曲 ID 必须是整数"));
         }
-        return m_songService.detail(songId);
+        if (isGet) {
+            return m_songService.detail(songId);
+        }
+        if (isDelete) {
+            return m_songService.deleteSong(songId);
+        }
+        return methodNotAllowed();
     }
 
     if (path == QLatin1String("/api/play")) {

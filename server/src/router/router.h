@@ -1,5 +1,6 @@
 #pragma once
 
+#include "service/onlineservice.h"
 #include "service/serviceresult.h"
 #include "service/songservice.h"
 #include "service/userservice.h"
@@ -22,6 +23,9 @@ public:
 
     bool start(const QString &bindAddress, quint16 port, QString *error);
 
+    // 音频文件根目录：song.file_path 相对该目录解析
+    void setMediaRoot(const QString &root) { m_songService.setMediaRoot(root); }
+
 private:
     void onNewConnection();
     void onReadyRead();
@@ -35,4 +39,5 @@ private:
 
     UserService m_userService;
     SongService m_songService;
+    OnlineService m_onlineService;
 };

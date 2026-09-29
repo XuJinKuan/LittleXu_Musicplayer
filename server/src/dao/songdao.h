@@ -37,7 +37,18 @@ public:
 
     bool detail(int songId, SongRecord *out);
 
+    // 添加歌曲（在线音源入库，filePath 为空）
+    bool addSong(const QString &title, int duration, const QString &artistName,
+                 const QString &albumName, const QString &genre, int *newSongId);
+
+    // 删除歌曲（级联删除 song_artist / play_record / favorite 等）
+    bool deleteSong(int songId);
+
     bool addPlayRecord(int userId, int songId, int playedSeconds, bool completed);
+
+    // 在线歌曲播放记录：songId 为 0，记录标题/歌手/酷我 rid
+    bool addOnlinePlayRecord(int userId, const QString &title, const QString &artist,
+                             const QString &rid, int playedSeconds, bool completed);
 
     // 调用存储过程 sp_user_monthly_report
     bool monthlyReport(int userId, int year, int month, QVector<PlayRecordRow> *out);

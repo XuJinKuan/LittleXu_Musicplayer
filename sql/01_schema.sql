@@ -76,7 +76,7 @@ CREATE TABLE song (
     song_id    INT          NOT NULL AUTO_INCREMENT COMMENT '歌曲ID',
     title      VARCHAR(150) NOT NULL                COMMENT '标题',
     duration   INT          NOT NULL                COMMENT '时长(秒)',
-    file_path  VARCHAR(255) NOT NULL                COMMENT '音频文件路径',
+    file_path  VARCHAR(255) NULL                    COMMENT '音频文件路径（在线音源为 NULL）',
     bitrate    INT          NULL                    COMMENT '码率(kbps)',
     year       SMALLINT     NULL                    COMMENT '年份',
     genre      ENUM('流行','摇滚','民谣','电子','嘻哈','古典','爵士','其他')
@@ -147,7 +147,10 @@ CREATE TABLE playlist_song (
 CREATE TABLE play_record (
     record_id      BIGINT     NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     user_id        INT        NOT NULL                COMMENT '用户ID',
-    song_id        INT        NOT NULL                COMMENT '歌曲ID',
+    song_id        INT        NULL                    COMMENT '歌曲ID（在线歌曲为 NULL）',
+    online_title   VARCHAR(150) NULL                  COMMENT '在线歌曲标题',
+    online_artist  VARCHAR(150) NULL                  COMMENT '在线歌曲歌手',
+    online_rid     VARCHAR(50)  NULL                  COMMENT '在线歌曲标识',
     played_at      DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '播放时间',
     played_seconds INT        NOT NULL DEFAULT 0      COMMENT '播放时长(秒)',
     is_completed   TINYINT(1) NOT NULL DEFAULT 0      COMMENT '是否完整播放',

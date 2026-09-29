@@ -4,6 +4,7 @@
 // 不必改代码重新编译。
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QSettings>
 #include <QString>
 #include <QtGlobal>
@@ -24,6 +25,7 @@ struct DbConfig {
 struct ServerConfig {
     QString bindAddress = QStringLiteral("0.0.0.0");
     quint16 port = 8080;
+    QString mediaRoot;   // 音频文件根目录，song.file_path 相对此目录解析
 };
 
 // QQ 邮箱 SMTP：必须用「授权码」而不是登录密码，走隐式 SSL 的 465 端口。
@@ -87,6 +89,13 @@ inline ServerConfig loadServerConfig()
     if (ok && port > 0 && port <= 65535) {
         c.port = static_cast<quint16>(port);
     }
+
+    // 音频根目录：默认取可执行文件目录的上两级（exe 在 server/build/，上两级即工程根目录），
+    // 与 DB 里的 media/song/xxx.mp3 拼接即为完整路径。
+    c.mediaRoot = envOr("MUSIC_MEDIA_ROOT",
+                        QDir(QCoreApplication::applicationDirPath())
+                            .absoluteFilePath(QStringLiteral("../..")));
+    c.mediaRoot = QDir::cleanPath(c.mediaRoot);
 
     return c;
 }

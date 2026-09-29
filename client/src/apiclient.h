@@ -24,6 +24,7 @@ public:
 
     void get(const QString &tag, const QString &path, const QUrlQuery &query = QUrlQuery());
     void post(const QString &tag, const QString &path, const QJsonObject &body = QJsonObject());
+    void del(const QString &tag, const QString &path);
 
 signals:
     // ok 等价于服务端 code == 0；网络层失败时 code 为 0 且 msg 为错误描述。

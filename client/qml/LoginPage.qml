@@ -12,7 +12,16 @@ Page {
     // 验证码重发倒计时（秒）。仅在服务端确认发信成功后才开始。
     property int countdown: 0
 
-    background: Rectangle { color: "#f5f6f8" }
+    background: Rectangle {
+        color: "#1e1e1e"
+
+        Image {
+            anchors.fill: parent
+            source: "qrc:/image/login_bg.png"
+            fillMode: Image.PreserveAspectCrop
+            opacity: 0.3
+        }
+    }
 
     function doLogin() {
         app.serverBase = serverField.text
@@ -65,23 +74,29 @@ Page {
                 text: qsTr("小徐爱听歌")
                 font.pixelSize: 30
                 font.bold: true
-                color: "#1f2937"
+                color: "#ffffff"
             }
 
             Label {
                 Layout.alignment: Qt.AlignHCenter
                 text: page.registerMode ? qsTr("注册新账号") : qsTr("个人音乐库 · 登录")
-                color: "#6b7280"
+                color: "#a3a3a3"
             }
 
             Frame {
                 Layout.fillWidth: true
 
+                background: Rectangle {
+                    color: "#2d2d2d"
+                    radius: 6
+                    border.color: "#404040"
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: 8
 
-                    Label { text: qsTr("服务器地址") }
+                    Label { text: qsTr("服务器地址"); color: "#d4d4d4" }
                     TextField {
                         id: serverField
                         Layout.fillWidth: true
@@ -90,7 +105,7 @@ Page {
                         selectByMouse: true
                     }
 
-                    Label { text: qsTr("用户名") }
+                    Label { text: qsTr("用户名"); color: "#d4d4d4" }
                     TextField {
                         id: userField
                         Layout.fillWidth: true
@@ -98,7 +113,7 @@ Page {
                         selectByMouse: true
                     }
 
-                    Label { text: qsTr("密码") }
+                    Label { text: qsTr("密码"); color: "#d4d4d4" }
                     TextField {
                         id: passField
                         Layout.fillWidth: true
@@ -111,6 +126,7 @@ Page {
                     Label {
                         visible: page.registerMode
                         text: qsTr("昵称（可留空，默认与用户名相同）")
+                        color: "#d4d4d4"
                     }
                     TextField {
                         id: nickField
@@ -123,6 +139,7 @@ Page {
                     Label {
                         visible: page.registerMode
                         text: qsTr("邮箱（用于接收验证码）")
+                        color: "#d4d4d4"
                     }
                     TextField {
                         id: emailField
@@ -136,6 +153,7 @@ Page {
                     Label {
                         visible: page.registerMode
                         text: qsTr("邮箱验证码")
+                        color: "#d4d4d4"
                     }
                     RowLayout {
                         visible: page.registerMode
@@ -208,7 +226,7 @@ Page {
             Label {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("测试账号：xiaoxu / 123456")
-                color: "#9ca3af"
+                color: "#737373"
                 font.pixelSize: 12
             }
         }

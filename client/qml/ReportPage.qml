@@ -9,6 +9,8 @@ Page {
     property int selMonth: new Date().getMonth() + 1
     property var report: ({})
 
+    background: Rectangle { color: "#1e1e1e" }
+
     function reload() {
         app.loadMonthlyReport(page.selYear, page.selMonth)
     }
@@ -36,7 +38,7 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Label { text: qsTr("年份") }
+            Label { text: qsTr("年份"); color: "#d4d4d4" }
 
             SpinBox {
                 id: yearBox
@@ -47,7 +49,7 @@ Page {
                 onValueModified: page.selYear = value
             }
 
-            Label { text: qsTr("月份") }
+            Label { text: qsTr("月份"); color: "#d4d4d4" }
 
             SpinBox {
                 id: monthBox
@@ -82,15 +84,21 @@ Page {
             Frame {
                 Layout.fillWidth: true
 
+                background: Rectangle {
+                    color: "#2d2d2d"
+                    radius: 6
+                    border.color: "#404040"
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
 
-                    Label { text: qsTr("本月播放歌曲数"); color: "#6b7280" }
+                    Label { text: qsTr("本月播放歌曲数"); color: "#a3a3a3" }
                     Label {
                         text: page.report.songCount !== undefined ? page.report.songCount : "-"
                         font.pixelSize: 28
                         font.bold: true
-                        color: "#1f2937"
+                        color: "#e5e5e5"
                     }
                 }
             }
@@ -98,15 +106,21 @@ Page {
             Frame {
                 Layout.fillWidth: true
 
+                background: Rectangle {
+                    color: "#2d2d2d"
+                    radius: 6
+                    border.color: "#404040"
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
 
-                    Label { text: qsTr("本月总时长（分钟）"); color: "#6b7280" }
+                    Label { text: qsTr("本月总时长（分钟）"); color: "#a3a3a3" }
                     Label {
                         text: page.report.totalMinutes !== undefined ? page.report.totalMinutes : "-"
                         font.pixelSize: 28
                         font.bold: true
-                        color: "#1f2937"
+                        color: "#e5e5e5"
                     }
                 }
             }
@@ -116,7 +130,7 @@ Page {
             Layout.fillWidth: true
             visible: page.report.items !== undefined && page.report.items.length === 0
             text: qsTr("%1 年 %2 月没有播放记录").arg(page.selYear).arg(page.selMonth)
-            color: "#6b7280"
+            color: "#a3a3a3"
         }
 
         ListView {
@@ -136,6 +150,11 @@ Page {
                 width: reportList.width
                 padding: 10
 
+                background: Rectangle {
+                    color: reportDelegate.hovered ? "#2d2d2d" : "transparent"
+                    radius: 4
+                }
+
                 contentItem: RowLayout {
                     spacing: 12
 
@@ -143,6 +162,7 @@ Page {
                         Layout.fillWidth: true
                         text: reportDelegate.modelData.title
                         font.bold: true
+                        color: "#ffffff"
                         elide: Text.ElideRight
                     }
 
@@ -150,21 +170,22 @@ Page {
                         text: reportDelegate.modelData.genre
                               && reportDelegate.modelData.genre.length > 0
                               ? reportDelegate.modelData.genre : qsTr("未分类")
-                        color: "#6b7280"
+                        color: "#a3a3a3"
                     }
 
                     Label {
                         text: qsTr("播放 %1 次").arg(reportDelegate.modelData.playTimes)
+                        color: "#d4d4d4"
                     }
 
                     Label {
                         text: qsTr("%1 秒").arg(reportDelegate.modelData.totalSeconds)
-                        color: "#6b7280"
+                        color: "#a3a3a3"
                     }
 
                     Label {
                         text: reportDelegate.modelData.isFavorite ? qsTr("已收藏") : qsTr("未收藏")
-                        color: reportDelegate.modelData.isFavorite ? "#b45309" : "#9ca3af"
+                        color: reportDelegate.modelData.isFavorite ? "#b45309" : "#737373"
                         font.pixelSize: 12
                     }
                 }

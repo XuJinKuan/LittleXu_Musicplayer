@@ -24,6 +24,7 @@ QByteArray statusText(int status)
     switch (status) {
     case 200: return QByteArrayLiteral("OK");
     case 204: return QByteArrayLiteral("No Content");
+    case 206: return QByteArrayLiteral("Partial Content");
     case 400: return QByteArrayLiteral("Bad Request");
     case 401: return QByteArrayLiteral("Unauthorized");
     case 403: return QByteArrayLiteral("Forbidden");
@@ -31,6 +32,7 @@ QByteArray statusText(int status)
     case 405: return QByteArrayLiteral("Method Not Allowed");
     case 409: return QByteArrayLiteral("Conflict");
     case 413: return QByteArrayLiteral("Payload Too Large");
+    case 416: return QByteArrayLiteral("Range Not Satisfiable");
     case 500: return QByteArrayLiteral("Internal Server Error");
     case 503: return QByteArrayLiteral("Service Unavailable");
     default:  return QByteArrayLiteral("Unknown");
@@ -117,6 +119,7 @@ bool parseRequest(const QByteArray &buffer, HttpRequest *out)
         }
         const QByteArray key = line.left(colon).trimmed().toLower();
         const QByteArray value = line.mid(colon + 1).trimmed();
+        out->headers.insert(QString::fromLatin1(key), QString::fromUtf8(value));
 
         if (key == QByteArrayLiteral("content-length")) {
             bool ok = false;
@@ -163,15 +166,19 @@ bool parseRequest(const QByteArray &buffer, HttpRequest *out)
     return true;
 }
 
-QByteArray makeResponse(int status, const QByteArray &body, const QByteArray &contentType)
+QByteArray makeResponse(int status, const QByteArray &body, const QByteArray &contentType,
+                        const QList<QPair<QByteArray, QByteArray>> &extraHeaders)
 {
     QByteArray resp;
     resp.reserve(body.size() + 256);
     resp += "HTTP/1.1 " + QByteArray::number(status) + ' ' + statusText(status) + "\r\n";
     resp += "Content-Type: " + contentType + "\r\n";
     resp += "Content-Length: " + QByteArray::number(body.size()) + "\r\n";
+    for (const auto &header : extraHeaders) {
+        resp += header.first + ": " + header.second + "\r\n";
+    }
     resp += "Access-Control-Allow-Origin: *\r\n";
-    resp += "Access-Control-Allow-Headers: Content-Type\r\n";
+    resp += "Access-Control-Allow-Headers: Content-Type, Range\r\n";
     resp += "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n";
     resp += "Connection: close\r\n";
     resp += "\r\n";

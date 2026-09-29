@@ -115,6 +115,8 @@ qt_add_executable(music_server
     src/service/serviceresult.h
     src/service/songservice.h
     src/service/songservice.cpp
+    src/service/onlineservice.h
+    src/service/onlineservice.cpp
     src/router/router.h
     src/router/router.cpp
 )

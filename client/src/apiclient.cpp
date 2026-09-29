@@ -56,6 +56,15 @@ void ApiClient::post(const QString &tag, const QString &path, const QJsonObject 
     watch(m_manager->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact)), tag);
 }
 
+void ApiClient::del(const QString &tag, const QString &path)
+{
+    QNetworkRequest request{QUrl(m_baseUrl + path)};
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QStringLiteral("application/json"));
+
+    watch(m_manager->deleteResource(request), tag);
+}
+
 void ApiClient::watch(QNetworkReply *reply, const QString &tag)
 {
     connect(reply, &QNetworkReply::finished, this, [this, reply, tag]() {

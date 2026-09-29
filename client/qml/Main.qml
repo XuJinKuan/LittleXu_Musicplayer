@@ -5,10 +5,10 @@ import QtQuick.Layouts
 ApplicationWindow {
     id: window
 
-    width: 1024
-    height: 720
-    minimumWidth: 860
-    minimumHeight: 560
+    width: 1300
+    height: 800
+    minimumWidth: 1024
+    minimumHeight: 640
     visible: true
     title: qsTr("小徐爱听歌")
 

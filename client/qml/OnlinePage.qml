@@ -2,19 +2,16 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+// 在线搜索：关键词经服务端转发到酷我，点「播放」时由服务端实时解析直链，
+// 再交给底部播放条播放。在线歌曲不入库，因此不计入听歌报告。
 Page {
     id: page
-
-    property string keyword: ""
 
     background: Rectangle { color: "#1e1e1e" }
 
     function doSearch() {
-        page.keyword = searchField.text
-        app.loadSongs(page.keyword, 1)
+        app.searchOnline(searchField.text)
     }
-
-    Component.onCompleted: app.loadSongs("", 1)
 
     ColumnLayout {
         anchors.fill: parent
@@ -28,7 +25,7 @@ Page {
             TextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: qsTr("按歌曲名、歌手或专辑名搜索")
+                placeholderText: qsTr("搜索在线歌曲（歌名或歌手）")
                 selectByMouse: true
                 onAccepted: page.doSearch()
             }
@@ -38,27 +35,17 @@ Page {
                 enabled: !app.busy
                 onClicked: page.doSearch()
             }
-
-            Button {
-                text: qsTr("重置")
-                enabled: !app.busy
-                onClicked: {
-                    searchField.text = ""
-                    page.keyword = ""
-                    app.loadSongs("", 1)
-                }
-            }
         }
 
         RowLayout {
             Layout.fillWidth: true
 
             Label {
-                text: qsTr("共 %1 首，每页 %2 首").arg(app.songTotal).arg(app.songLimit)
+                Layout.fillWidth: true
+                elide: Text.ElideRight
                 color: "#a3a3a3"
+                text: qsTr("音源来自酷我；直链实时解析，首次播放可能稍慢。")
             }
-
-            Item { Layout.fillWidth: true }
 
             Label {
                 text: app.lastError
@@ -70,40 +57,32 @@ Page {
         }
 
         ListView {
-            id: songList
+            id: onlineList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
             spacing: 4
-            model: app.songs
+            model: app.onlineSongs
             boundsBehavior: Flickable.StopAtBounds
 
             delegate: ItemDelegate {
-                id: songDelegate
+                id: onlineDelegate
 
-                required property int songId
-                required property string title
-                required property string artist
-                required property string album
-                required property string genre
-                required property int playCount
-                required property string durationText
-                required property int index
+                required property var modelData
 
-                width: songList.width
+                width: onlineList.width
                 padding: 10
 
-                // 左击播放，右击删除
+                // 左击播放，右击添加到歌曲库
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                     onClicked: function(mouse) {
                         if (mouse.button === Qt.LeftButton) {
-                            app.playSong(songDelegate.songId,
-                                         songDelegate.title,
-                                         songDelegate.artist,
-                                         songDelegate.index)
+                            app.playOnlineSong(onlineDelegate.modelData.rid,
+                                               onlineDelegate.modelData.name,
+                                               onlineDelegate.modelData.artist)
                         } else if (mouse.button === Qt.RightButton) {
                             contextMenu.popup()
                         }
@@ -113,16 +92,20 @@ Page {
                         id: contextMenu
 
                         MenuItem {
-                            text: qsTr("从歌曲库删除")
+                            text: qsTr("添加到歌曲库")
                             onTriggered: {
-                                app.deleteSong(songDelegate.songId)
+                                app.addSong(onlineDelegate.modelData.rid,
+                                            onlineDelegate.modelData.name,
+                                            onlineDelegate.modelData.artist,
+                                            onlineDelegate.modelData.album,
+                                            onlineDelegate.modelData.durationText)
                             }
                         }
                     }
                 }
 
                 background: Rectangle {
-                    color: songDelegate.hovered ? "#2d2d2d" : "transparent"
+                    color: onlineDelegate.hovered ? "#2d2d2d" : "transparent"
                     radius: 4
                 }
 
@@ -135,7 +118,7 @@ Page {
 
                         Label {
                             Layout.fillWidth: true
-                            text: songDelegate.title
+                            text: onlineDelegate.modelData.name
                             font.bold: true
                             color: "#ffffff"
                             elide: Text.ElideRight
@@ -146,27 +129,23 @@ Page {
                             color: "#a3a3a3"
                             font.pixelSize: 12
                             elide: Text.ElideRight
-                            text: [songDelegate.artist, songDelegate.album]
+                            text: [onlineDelegate.modelData.artist, onlineDelegate.modelData.album]
                                   .filter(function (s) { return s && s.length > 0 })
                                   .join(" · ")
                         }
                     }
 
                     Label {
-                        text: songDelegate.genre
-                        color: "#a3a3a3"
-                        visible: text.length > 0
-                    }
-
-                    Label {
-                        text: songDelegate.durationText
+                        text: onlineDelegate.modelData.durationText
                         color: "#d4d4d4"
                     }
 
-                    Label {
-                        text: qsTr("播放 %1").arg(songDelegate.playCount)
-                        color: "#737373"
-                        font.pixelSize: 12
+                    Button {
+                        text: qsTr("播放")
+                        enabled: !app.busy
+                        onClicked: app.playOnlineSong(onlineDelegate.modelData.rid,
+                                                      onlineDelegate.modelData.name,
+                                                      onlineDelegate.modelData.artist)
                     }
                 }
             }
@@ -175,31 +154,9 @@ Page {
 
             Label {
                 anchors.centerIn: parent
-                visible: songList.count === 0 && !app.busy
-                text: qsTr("没有可显示的歌曲")
+                visible: onlineList.count === 0 && !app.busy
+                text: qsTr("输入关键词后回车，从在线音源搜索")
                 color: "#737373"
-            }
-        }
-
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
-            spacing: 8
-
-            Button {
-                text: qsTr("上一页")
-                enabled: app.currentPage > 1 && !app.busy
-                onClicked: app.loadSongs(page.keyword, app.currentPage - 1)
-            }
-
-            Label {
-                text: qsTr("第 %1 页").arg(app.currentPage)
-                color: "#d4d4d4"
-            }
-
-            Button {
-                text: qsTr("下一页")
-                enabled: app.currentPage * app.songLimit < app.songTotal && !app.busy
-                onClicked: app.loadSongs(page.keyword, app.currentPage + 1)
             }
         }
     }
