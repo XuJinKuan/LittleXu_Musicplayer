@@ -7,7 +7,7 @@ Page {
 
     property string keyword: ""
 
-    background: Rectangle { color: "#1e1e1e" }
+    background: Rectangle { color: "transparent" }
 
     function doSearch() {
         page.keyword = searchField.text

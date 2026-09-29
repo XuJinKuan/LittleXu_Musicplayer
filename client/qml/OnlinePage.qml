@@ -7,7 +7,7 @@ import QtQuick.Layouts
 Page {
     id: page
 
-    background: Rectangle { color: "#1e1e1e" }
+    background: Rectangle { color: "transparent" }
 
     function doSearch() {
         app.searchOnline(searchField.text)

@@ -55,6 +55,7 @@ qt_add_resources(music_client "qml"
         image/volume.png
         image/voice_clicked.png
         image/login_bg.png
+        image/background.png
         image/logo.png
 )
 

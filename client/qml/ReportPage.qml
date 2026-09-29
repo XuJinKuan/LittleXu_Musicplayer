@@ -9,7 +9,7 @@ Page {
     property int selMonth: new Date().getMonth() + 1
     property var report: ({})
 
-    background: Rectangle { color: "#1e1e1e" }
+    background: Rectangle { color: "transparent" }
 
     function reload() {
         app.loadMonthlyReport(page.selYear, page.selMonth)

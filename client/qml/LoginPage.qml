@@ -17,25 +17,22 @@ Page {
 
         Image {
             anchors.fill: parent
-            source: "qrc:/image/login_bg.png"
+            source: "qrc:/image/background.png"
             fillMode: Image.PreserveAspectCrop
             opacity: 0.3
         }
     }
 
     function doLogin() {
-        app.serverBase = serverField.text
         app.login(userField.text, passField.text)
     }
 
     function doRegister() {
-        app.serverBase = serverField.text
         app.registerUser(userField.text, passField.text, nickField.text,
                          emailField.text, codeField.text)
     }
 
     function doSendCode() {
-        app.serverBase = serverField.text
         app.sendEmailCode(emailField.text)
     }
 
@@ -87,23 +84,14 @@ Page {
                 Layout.fillWidth: true
 
                 background: Rectangle {
-                    color: "#2d2d2d"
+                    color: "#66202020"
                     radius: 6
-                    border.color: "#404040"
+                    border.color: "#66404040"
                 }
 
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: 8
-
-                    Label { text: qsTr("服务器地址"); color: "#d4d4d4" }
-                    TextField {
-                        id: serverField
-                        Layout.fillWidth: true
-                        text: app.serverBase
-                        placeholderText: "http://127.0.0.1:8080"
-                        selectByMouse: true
-                    }
 
                     Label { text: qsTr("用户名"); color: "#d4d4d4" }
                     TextField {
@@ -111,6 +99,12 @@ Page {
                         Layout.fillWidth: true
                         placeholderText: qsTr("3~50 个字符")
                         selectByMouse: true
+
+                        background: Rectangle {
+                            radius: 4
+                            color: "#40000000"
+                            border.color: "#59ffffff"
+                        }
                     }
 
                     Label { text: qsTr("密码"); color: "#d4d4d4" }
@@ -121,6 +115,12 @@ Page {
                         placeholderText: qsTr("至少 6 位")
                         selectByMouse: true
                         onAccepted: page.registerMode ? page.doRegister() : page.doLogin()
+
+                        background: Rectangle {
+                            radius: 4
+                            color: "#40000000"
+                            border.color: "#59ffffff"
+                        }
                     }
 
                     Label {
@@ -134,6 +134,12 @@ Page {
                         Layout.fillWidth: true
                         placeholderText: qsTr("例如：徐同学")
                         selectByMouse: true
+
+                        background: Rectangle {
+                            radius: 4
+                            color: "#40000000"
+                            border.color: "#59ffffff"
+                        }
                     }
 
                     Label {
@@ -148,6 +154,12 @@ Page {
                         placeholderText: qsTr("例如：363161953@qq.com")
                         inputMethodHints: Qt.ImhEmailCharactersOnly | Qt.ImhNoAutoUppercase
                         selectByMouse: true
+
+                        background: Rectangle {
+                            radius: 4
+                            color: "#40000000"
+                            border.color: "#59ffffff"
+                        }
                     }
 
                     Label {
@@ -167,6 +179,12 @@ Page {
                             maximumLength: 4
                             inputMethodHints: Qt.ImhDigitsOnly
                             selectByMouse: true
+
+                            background: Rectangle {
+                                radius: 4
+                                color: "#40000000"
+                                border.color: "#59ffffff"
+                            }
                         }
 
                         Button {

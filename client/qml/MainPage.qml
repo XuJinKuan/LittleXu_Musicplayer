@@ -9,7 +9,16 @@ Page {
     property bool isLoginPage: false
     property int currentNavIndex: 0
 
-    background: Rectangle { color: "#1e1e1e" }
+    background: Rectangle {
+        color: "#1e1e1e"
+
+        Image {
+            anchors.fill: parent
+            source: "qrc:/image/background.png"
+            fillMode: Image.PreserveAspectCrop
+            opacity: 0.3
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
