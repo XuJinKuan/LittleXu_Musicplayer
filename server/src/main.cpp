@@ -1,9 +1,11 @@
 #include "router/router.h"
 #include "util/config.h"
+#include "util/mailer.h"
 #include "util/mysqlpool.h"
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QSslSocket>
 
 int main(int argc, char *argv[])
 {
@@ -19,7 +21,26 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // 2) HTTP 服务
+    // 2) 邮件服务（注册验证码）
+    const cfg::MailConfig mailConfig = cfg::loadMailConfig();
+    Mailer::init(mailConfig);
+    if (Mailer::isReady()) {
+        qInfo().noquote() << QStringLiteral("邮件服务已就绪：%1:%2（发件人 %3）")
+                                 .arg(mailConfig.host)
+                                 .arg(mailConfig.port)
+                                 .arg(mailConfig.user);
+        if (!QSslSocket::supportsSsl()) {
+            qWarning().noquote() << QStringLiteral(
+                "当前环境 SSL 不可用，发信会失败：请确认 libssl-1_1-x64.dll 与 "
+                "libcrypto-1_1-x64.dll 与可执行文件同目录");
+        }
+    } else {
+        qWarning().noquote() << QStringLiteral(
+            "未配置 SMTP 授权码，注册验证码功能不可用：请设置环境变量 "
+            "MUSIC_SMTP_AUTH_CODE，或在可执行文件同目录创建 mail.local.ini");
+    }
+
+    // 3) HTTP 服务
     const cfg::ServerConfig serverConfig = cfg::loadServerConfig();
     Router router;
     if (!router.start(serverConfig.bindAddress, serverConfig.port, &error)) {

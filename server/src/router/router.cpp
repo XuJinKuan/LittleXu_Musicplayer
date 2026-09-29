@@ -151,6 +151,13 @@ ServiceResult Router::route(const HttpRequest &req)
         return r;
     }
 
+    if (path == QLatin1String("/api/email/code")) {
+        if (!isPost) {
+            return methodNotAllowed();
+        }
+        return m_userService.sendEmailCode(req.json);
+    }
+
     if (path == QLatin1String("/api/register")) {
         if (!isPost) {
             return methodNotAllowed();

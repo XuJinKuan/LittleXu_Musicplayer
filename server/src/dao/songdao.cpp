@@ -55,9 +55,15 @@ bool SongDao::list(const QString &keyword, int limit, int offset,
     QString where;
     QVariantList args;
     if (!keyword.isEmpty()) {
-        where = QStringLiteral("WHERE s.title LIKE ? OR al.name LIKE ? ");
+        // 歌曲名 / 专辑名 / 歌手名 任一命中即可。歌手是多对多，
+        // 用 EXISTS 避免 JOIN 造成同一首歌重复出行。
+        where = QStringLiteral(
+            "WHERE s.title LIKE ? OR al.name LIKE ? "
+            "   OR EXISTS (SELECT 1 FROM song_artist sa "
+            "                JOIN artist ar ON sa.artist_id = ar.artist_id "
+            "               WHERE sa.song_id = s.song_id AND ar.name LIKE ?) ");
         const QString like = QStringLiteral("%") + keyword + QStringLiteral("%");
-        args << like << like;
+        args << like << like << like;
     }
 
     if (total) {

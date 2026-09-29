@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dao/userdao.h"
+#include "dao/verifydao.h"
 #include "serviceresult.h"
 
 #include <QJsonObject>
@@ -12,6 +13,9 @@ public:
     ServiceResult signUp(const QJsonObject &req);
     ServiceResult signIn(const QJsonObject &req);
 
+    // 向邮箱发送 4 位注册验证码
+    ServiceResult sendEmailCode(const QJsonObject &req);
+
     // SHA-256(salt + 明文)，十六进制小写
     static QString hashPassword(const QString &salt, const QString &password);
 
@@ -19,4 +23,5 @@ private:
     static QString makeSalt();
 
     UserDao m_userDao;
+    VerifyDao m_verifyDao;
 };

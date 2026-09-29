@@ -102,8 +102,12 @@ qt_add_executable(music_server
     src/util/mysqlpool.cpp
     src/util/http.h
     src/util/http.cpp
+    src/util/mailer.h
+    src/util/mailer.cpp
     src/dao/userdao.h
     src/dao/userdao.cpp
+    src/dao/verifydao.h
+    src/dao/verifydao.cpp
     src/dao/songdao.h
     src/dao/songdao.cpp
     src/service/userservice.h
@@ -150,3 +154,17 @@ foreach(_openssl_dll "${MYSQL_SSL_DLL}" "${MYSQL_CRYPTO_DLL}")
             "启动前请手工复制 libssl-1_1-x64.dll 与 libcrypto-1_1-x64.dll。")
     endif()
 endforeach()
+
+# SMTP 授权码等私密配置放在 mail.local.ini（已在 .gitignore 中忽略）。
+# 只有文件存在时才复制，否则首次配置前构建会直接报错。
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mail.local.ini")
+    add_custom_command(TARGET music_server POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/mail.local.ini"
+                "$<TARGET_FILE_DIR:music_server>"
+        COMMENT "复制 mail.local.ini 到可执行文件目录")
+else()
+    message(STATUS
+        "未找到 server/mail.local.ini：构建产物不会包含 SMTP 授权码，"
+        "注册验证码功能需要环境变量 MUSIC_SMTP_AUTH_CODE 或手工放置该文件。")
+endif()

@@ -21,3 +21,6 @@ android-build/
 Thumbs.db
 Desktop.ini
 .vscode/
+
+# 本地私密配置（SMTP 授权码）
+mail.local.ini
