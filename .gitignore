@@ -1,7 +1,9 @@
 # 构建产物
 server/build/
 build/
+build-android/
 cmake-build-*/
+dist/
 
 # CMake 中间文件
 CMakeCache.txt
