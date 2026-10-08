@@ -254,7 +254,7 @@ ServiceResult Router::route(const HttpRequest &req)
             return m_songService.detail(songId);
         }
         if (isDelete) {
-            return m_songService.deleteSong(songId);
+            return m_songService.deleteSong(songId, req.query.value(QStringLiteral("userId")).toInt());
         }
         return methodNotAllowed();
     }

@@ -7,6 +7,8 @@ Page {
 
     property string keyword: ""
 
+    readonly property bool narrow: width < 600
+
     background: Rectangle { color: "transparent" }
 
     function doSearch() {
@@ -155,7 +157,7 @@ Page {
                     Label {
                         text: songDelegate.genre
                         color: "#a3a3a3"
-                        visible: text.length > 0
+                        visible: text.length > 0 && !page.narrow
                     }
 
                     Label {
@@ -167,6 +169,13 @@ Page {
                         text: qsTr("播放 %1").arg(songDelegate.playCount)
                         color: "#737373"
                         font.pixelSize: 12
+                        visible: !page.narrow
+                    }
+
+                    Button {
+                        text: qsTr("删除")
+                        enabled: !app.busy
+                        onClicked: app.deleteSong(songDelegate.songId)
                     }
                 }
             }

@@ -59,13 +59,18 @@ int intFromQuery(const QMap<QString, QString> &query, const QString &key, int fa
 
 ServiceResult SongService::list(const QMap<QString, QString> &query)
 {
+    const int userId = intFromQuery(query, QStringLiteral("userId"), 0);
     const QString keyword = query.value(QStringLiteral("keyword")).trimmed();
     const int limit = intFromQuery(query, QStringLiteral("limit"), 20);
     const int offset = intFromQuery(query, QStringLiteral("offset"), 0);
 
+    if (userId <= 0) {
+        return fail(400, QStringLiteral("userId 必填"));
+    }
+
     QVector<SongRecord> songs;
     int total = 0;
-    if (!m_songDao.list(keyword, limit, offset, &songs, &total)) {
+    if (!m_songDao.list(userId, keyword, limit, offset, &songs, &total)) {
         return fail(500, QStringLiteral("查询歌曲列表失败"));
     }
 
@@ -97,18 +102,22 @@ ServiceResult SongService::detail(int songId)
 
 ServiceResult SongService::addSong(const QJsonObject &req)
 {
+    const int userId = req.value(QStringLiteral("userId")).toInt();
     const QString title = req.value(QStringLiteral("title")).toString().trimmed();
     const int duration = req.value(QStringLiteral("duration")).toInt();
     const QString artist = req.value(QStringLiteral("artist")).toString().trimmed();
     const QString album = req.value(QStringLiteral("album")).toString().trimmed();
     const QString genre = req.value(QStringLiteral("genre")).toString().trimmed();
 
+    if (userId <= 0) {
+        return fail(400, QStringLiteral("userId 必填"));
+    }
     if (title.isEmpty() || duration <= 0) {
         return fail(400, QStringLiteral("歌曲标题和时长必填"));
     }
 
     int newSongId = 0;
-    if (!m_songDao.addSong(title, duration, artist, album, genre, &newSongId)) {
+    if (!m_songDao.addSong(title, duration, artist, album, genre, userId, &newSongId)) {
         return fail(500, QStringLiteral("添加歌曲失败"));
     }
 
@@ -117,14 +126,15 @@ ServiceResult SongService::addSong(const QJsonObject &req)
     return ok(data, QStringLiteral("歌曲已添加到库"));
 }
 
-ServiceResult SongService::deleteSong(int songId)
+ServiceResult SongService::deleteSong(int songId, int userId)
 {
-    if (songId <= 0) {
-        return fail(400, QStringLiteral("歌曲 ID 非法"));
+    if (songId <= 0 || userId <= 0) {
+        return fail(400, QStringLiteral("歌曲 ID 或 userId 非法"));
     }
 
-    if (!m_songDao.deleteSong(songId)) {
-        return fail(500, QStringLiteral("删除歌曲失败"));
+    // 仅允许删除归属当前用户的歌曲；不存在或非本人歌曲统一返回 404
+    if (!m_songDao.deleteSong(songId, userId)) {
+        return fail(404, QStringLiteral("歌曲不存在或不属于当前用户"));
     }
 
     QJsonObject data;

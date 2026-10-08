@@ -31,18 +31,19 @@ struct PlayRecordRow {
 class SongDao
 {
 public:
-    // keyword 为空表示不过滤
-    bool list(const QString &keyword, int limit, int offset,
+    // keyword 为空表示不过滤；只返回归属 userId 的歌曲
+    bool list(int userId, const QString &keyword, int limit, int offset,
               QVector<SongRecord> *out, int *total);
 
     bool detail(int songId, SongRecord *out);
 
-    // 添加歌曲（在线音源入库，filePath 为空）
+    // 添加歌曲（在线音源入库，filePath 为空），归属 ownerUserId
     bool addSong(const QString &title, int duration, const QString &artistName,
-                 const QString &albumName, const QString &genre, int *newSongId);
+                 const QString &albumName, const QString &genre, int ownerUserId,
+                 int *newSongId);
 
-    // 删除歌曲（级联删除 song_artist / play_record / favorite 等）
-    bool deleteSong(int songId);
+    // 删除歌曲（仅限归属用户；级联删除 song_artist / play_record / favorite 等）
+    bool deleteSong(int songId, int userId);
 
     bool addPlayRecord(int userId, int songId, int playedSeconds, bool completed);
 

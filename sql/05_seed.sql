@@ -53,17 +53,17 @@ INSERT INTO album (album_id, name, release_date, artist_id) VALUES
 -- -------------------------------------------------------------
 -- 歌曲（play_count 交给 trg_play_insert 累加，此处不写）
 -- -------------------------------------------------------------
-INSERT INTO song (song_id, title, duration, file_path, bitrate, year, genre, album_id) VALUES
-(1,  '晴天',              269, 'media/song/001.mp3', 320, 2003, '流行', 1),
-(2,  '以父之名',          348, 'media/song/002.mp3', 320, 2003, '流行', 1),
-(3,  '倔强',              236, 'media/song/003.mp3', 320, 2011, '摇滚', 2),
-(4,  '干杯',              326, 'media/song/004.mp3', 320, 2011, '摇滚', 2),
-(5,  '奇妙能力歌',        261, 'media/song/005.mp3', 320, 2015, '民谣', 3),
-(6,  '小半',              248, 'media/song/006.mp3', 320, 2015, '民谣', 3),
-(7,  '点歌的人',          231, 'media/song/007.mp3', 320, 2019, '民谣', 4),
-(8,  '不过人间',          245, 'media/song/008.mp3', 320, 2019, '流行', 4),
-(9,  'Hello',             295, 'media/song/009.mp3', 320, 2015, '流行', 5),
-(10, 'Rolling in the Deep', 228, 'media/song/010.mp3', 320, 2010, '摇滚', 5);
+INSERT INTO song (song_id, title, duration, file_path, bitrate, year, genre, album_id, owner_user_id) VALUES
+(1,  '晴天',              269, 'media/song/001.mp3', 320, 2003, '流行', 1, 1),
+(2,  '以父之名',          348, 'media/song/002.mp3', 320, 2003, '流行', 1, 1),
+(3,  '倔强',              236, 'media/song/003.mp3', 320, 2011, '摇滚', 2, 1),
+(4,  '干杯',              326, 'media/song/004.mp3', 320, 2011, '摇滚', 2, 1),
+(5,  '奇妙能力歌',        261, 'media/song/005.mp3', 320, 2015, '民谣', 3, 1),
+(6,  '小半',              248, 'media/song/006.mp3', 320, 2015, '民谣', 3, 1),
+(7,  '点歌的人',          231, 'media/song/007.mp3', 320, 2019, '民谣', 4, 1),
+(8,  '不过人间',          245, 'media/song/008.mp3', 320, 2019, '流行', 4, 1),
+(9,  'Hello',             295, 'media/song/009.mp3', 320, 2015, '流行', 5, 1),
+(10, 'Rolling in the Deep', 228, 'media/song/010.mp3', 320, 2010, '摇滚', 5, 1);
 
 -- -------------------------------------------------------------
 -- 歌曲-歌手（含一条 feat 合唱，用于演示 role 枚举）
@@ -172,4 +172,3 @@ INSERT INTO favorite (user_id, song_id, rating) VALUES
 -- SELECT song_id, title, play_count FROM song ORDER BY play_count DESC;
 -- SELECT * FROM playlist_song WHERE playlist_id = 4 ORDER BY sort_no;
 -- CALL sp_user_monthly_report(1, 2026, 9);
--- CALL sp_similar_song(5, 3);

@@ -9,6 +9,9 @@ Page {
     property int selMonth: new Date().getMonth() + 1
     property var report: ({})
 
+    // 窄屏（手机）自适应：隐藏次要列，错误信息独占一行
+    readonly property bool narrow: width < 600
+
     background: Rectangle { color: "transparent" }
 
     function reload() {
@@ -45,6 +48,7 @@ Page {
                 from: 2000
                 to: 2100
                 editable: true
+                locale: Qt.locale("C")
                 value: page.selYear
                 onValueModified: page.selYear = value
             }
@@ -56,6 +60,7 @@ Page {
                 from: 1
                 to: 12
                 editable: true
+                locale: Qt.locale("C")
                 value: page.selMonth
                 onValueModified: page.selMonth = value
             }
@@ -71,10 +76,19 @@ Page {
             Label {
                 text: app.lastError
                 color: "#dc2626"
-                visible: app.lastError.length > 0
+                visible: !page.narrow && app.lastError.length > 0
                 elide: Text.ElideRight
                 Layout.maximumWidth: page.width / 2
             }
+        }
+
+        // 窄屏：错误信息独占一行（宽屏时在筛选行内）
+        Label {
+            Layout.fillWidth: true
+            text: app.lastError
+            color: "#dc2626"
+            visible: page.narrow && app.lastError.length > 0
+            elide: Text.ElideRight
         }
 
         RowLayout {
@@ -167,6 +181,7 @@ Page {
                     }
 
                     Label {
+                        visible: !page.narrow
                         text: reportDelegate.modelData.genre
                               && reportDelegate.modelData.genre.length > 0
                               ? reportDelegate.modelData.genre : qsTr("未分类")
@@ -184,6 +199,7 @@ Page {
                     }
 
                     Label {
+                        visible: !page.narrow
                         text: reportDelegate.modelData.isFavorite ? qsTr("已收藏") : qsTr("未收藏")
                         color: reportDelegate.modelData.isFavorite ? "#b45309" : "#737373"
                         font.pixelSize: 12

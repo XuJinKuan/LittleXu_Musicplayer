@@ -1,6 +1,6 @@
 -- =============================================================
 -- 小徐爱听歌 · 视图脚本
--- 对应 PLAN.md 第 5.3 节：v_song_detail / v_user_play_summary / v_hot_song
+-- 对应 PLAN.md 第 5.3 节：v_song_detail / v_user_play_summary
 -- 依赖：先执行 01_schema.sql
 -- 说明：CREATE OR REPLACE，可重复执行，不影响基础表数据
 -- =============================================================
@@ -52,23 +52,6 @@ LEFT JOIN play_record pr ON u.user_id = pr.user_id
 GROUP BY u.user_id, u.username, u.nickname;
 
 -- -------------------------------------------------------------
--- 3. v_hot_song 热度榜视图
--- 用途：全站热度榜；play_count 由触发器 trg_play_insert 维护，
---       listener_count 为去重听众数，artist_names 为 '主唱/feat' 拼接串
+-- 3. v_hot_song 热度榜视图：已随「统计分析」功能移除
+-- 若数据库实例中仍残留该视图，请手工执行：DROP VIEW IF EXISTS v_hot_song;
 -- -------------------------------------------------------------
-CREATE OR REPLACE VIEW v_hot_song AS
-SELECT
-    s.song_id    AS song_id,
-    s.title      AS title,
-    s.genre      AS genre,
-    s.play_count AS play_count,
-    al.name      AS album_name,
-    (SELECT GROUP_CONCAT(ar.name ORDER BY sa.role SEPARATOR '/')
-       FROM song_artist sa
-       JOIN artist ar ON sa.artist_id = ar.artist_id
-      WHERE sa.song_id = s.song_id) AS artist_names,
-    COUNT(DISTINCT pr.user_id)      AS listener_count
-FROM song s
-LEFT JOIN album al       ON s.album_id = al.album_id
-LEFT JOIN play_record pr ON s.song_id = pr.song_id
-GROUP BY s.song_id, s.title, s.genre, s.play_count, al.name;

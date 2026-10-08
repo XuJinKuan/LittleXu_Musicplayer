@@ -81,13 +81,17 @@ CREATE TABLE song (
     year       SMALLINT     NULL                    COMMENT '年份',
     genre      ENUM('流行','摇滚','民谣','电子','嘻哈','古典','爵士','其他')
                             NOT NULL DEFAULT '其他'  COMMENT '曲风',
-    album_id   INT          NULL                    COMMENT '所属专辑',
-    play_count INT          NOT NULL DEFAULT 0      COMMENT '累计播放次数(由触发器维护)',
+    album_id      INT       NULL                    COMMENT '所属专辑',
+    owner_user_id INT       NOT NULL                COMMENT '归属用户（曲库按用户隔离）',
+    play_count    INT       NOT NULL DEFAULT 0      COMMENT '累计播放次数(由触发器维护)',
     PRIMARY KEY (song_id),
     KEY idx_song_album (album_id),
     KEY idx_song_genre (genre),
+    KEY idx_song_owner (owner_user_id),
     CONSTRAINT fk_song_album FOREIGN KEY (album_id) REFERENCES album (album_id)
         ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_song_owner FOREIGN KEY (owner_user_id) REFERENCES `user` (user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT ck_song_duration CHECK (duration > 0),
     CONSTRAINT ck_song_play_count CHECK (play_count >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='歌曲表';

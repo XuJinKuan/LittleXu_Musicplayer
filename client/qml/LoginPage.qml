@@ -24,15 +24,18 @@ Page {
     }
 
     function doLogin() {
+        app.serverBase = serverField.text.trim()
         app.login(userField.text, passField.text)
     }
 
     function doRegister() {
+        app.serverBase = serverField.text.trim()
         app.registerUser(userField.text, passField.text, nickField.text,
                          emailField.text, codeField.text)
     }
 
     function doSendCode() {
+        app.serverBase = serverField.text.trim()
         app.sendEmailCode(emailField.text)
     }
 
@@ -93,10 +96,28 @@ Page {
                     anchors.fill: parent
                     spacing: 8
 
+                    Label { text: qsTr("服务器地址"); color: "#d4d4d4" }
+                    TextField {
+                        id: serverField
+                        Layout.fillWidth: true
+                        color: "#ffffff"
+                        text: app.serverBase
+                        placeholderText: qsTr("http://127.0.0.1:8080")
+                        inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
+                        selectByMouse: true
+
+                        background: Rectangle {
+                            radius: 4
+                            color: "#40000000"
+                            border.color: "#59ffffff"
+                        }
+                    }
+
                     Label { text: qsTr("用户名"); color: "#d4d4d4" }
                     TextField {
                         id: userField
                         Layout.fillWidth: true
+                        color: "#ffffff"
                         placeholderText: qsTr("3~50 个字符")
                         selectByMouse: true
 
@@ -111,6 +132,7 @@ Page {
                     TextField {
                         id: passField
                         Layout.fillWidth: true
+                        color: "#ffffff"
                         echoMode: TextInput.Password
                         placeholderText: qsTr("至少 6 位")
                         selectByMouse: true
@@ -132,6 +154,7 @@ Page {
                         id: nickField
                         visible: page.registerMode
                         Layout.fillWidth: true
+                        color: "#ffffff"
                         placeholderText: qsTr("例如：徐同学")
                         selectByMouse: true
 
@@ -151,6 +174,7 @@ Page {
                         id: emailField
                         visible: page.registerMode
                         Layout.fillWidth: true
+                        color: "#ffffff"
                         placeholderText: qsTr("例如：363161953@qq.com")
                         inputMethodHints: Qt.ImhEmailCharactersOnly | Qt.ImhNoAutoUppercase
                         selectByMouse: true
@@ -175,6 +199,7 @@ Page {
                         TextField {
                             id: codeField
                             Layout.fillWidth: true
+                            color: "#ffffff"
                             placeholderText: qsTr("4 位数字")
                             maximumLength: 4
                             inputMethodHints: Qt.ImhDigitsOnly

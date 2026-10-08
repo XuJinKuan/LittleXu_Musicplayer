@@ -17,6 +17,10 @@ android-build/
 *.apk
 *.aab
 
+# 签名密钥（禁止提交）
+*.keystore
+*.jks
+
 # 系统文件
 Thumbs.db
 Desktop.ini

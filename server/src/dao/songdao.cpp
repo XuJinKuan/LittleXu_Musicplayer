@@ -33,7 +33,7 @@ void fillSong(const SqlResult &res, int row, SongRecord *out)
 
 } // namespace
 
-bool SongDao::list(const QString &keyword, int limit, int offset,
+bool SongDao::list(int userId, const QString &keyword, int limit, int offset,
                    QVector<SongRecord> *out, int *total)
 {
     if (!out) {
@@ -52,16 +52,18 @@ bool SongDao::list(const QString &keyword, int limit, int offset,
         return false;
     }
 
-    QString where;
+    // 曲库按用户隔离：只查归属当前用户的歌曲
+    QString where = QStringLiteral("WHERE s.owner_user_id = ? ");
     QVariantList args;
+    args << userId;
     if (!keyword.isEmpty()) {
         // 歌曲名 / 专辑名 / 歌手名 任一命中即可。歌手是多对多，
         // 用 EXISTS 避免 JOIN 造成同一首歌重复出行。
-        where = QStringLiteral(
-            "WHERE s.title LIKE ? OR al.name LIKE ? "
+        where += QStringLiteral(
+            "AND (s.title LIKE ? OR al.name LIKE ? "
             "   OR EXISTS (SELECT 1 FROM song_artist sa "
             "                JOIN artist ar ON sa.artist_id = ar.artist_id "
-            "               WHERE sa.song_id = s.song_id AND ar.name LIKE ?) ");
+            "               WHERE sa.song_id = s.song_id AND ar.name LIKE ?)) ");
         const QString like = QStringLiteral("%") + keyword + QStringLiteral("%");
         args << like << like << like;
     }
@@ -132,7 +134,8 @@ bool SongDao::detail(int songId, SongRecord *out)
 }
 
 bool SongDao::addSong(const QString &title, int duration, const QString &artistName,
-                      const QString &albumName, const QString &genre, int *newSongId)
+                      const QString &albumName, const QString &genre, int ownerUserId,
+                      int *newSongId)
 {
     if (newSongId) {
         *newSongId = 0;
@@ -192,10 +195,10 @@ bool SongDao::addSong(const QString &title, int duration, const QString &artistN
 
     // 3. 插入 song
     const QString insSong = MySqlPool::buildSql(
-        QStringLiteral("INSERT INTO song (title, duration, file_path, genre, album_id) "
-                       "VALUES (?, ?, NULL, ?, ?)"),
+        QStringLiteral("INSERT INTO song (title, duration, file_path, genre, album_id, owner_user_id) "
+                       "VALUES (?, ?, NULL, ?, ?, ?)"),
         {title, qMax(1, duration), genre.isEmpty() ? QStringLiteral("其他") : genre,
-         albumId > 0 ? albumId : QVariant()});
+         albumId > 0 ? albumId : QVariant(), ownerUserId});
     QString err;
     if (!lease->exec(insSong, &err)) {
         return false;
@@ -228,21 +231,25 @@ bool SongDao::addSong(const QString &title, int duration, const QString &artistN
     return true;
 }
 
-bool SongDao::deleteSong(int songId)
+bool SongDao::deleteSong(int songId, int userId)
 {
     MySqlPool::Lease lease = MySqlPool::instance().acquire();
     if (!lease.valid()) {
         return false;
     }
 
-    // song_artist / play_record / favorite / playlist_song 都是 ON DELETE CASCADE
-    // 只需删 song 主表
+    // 仅允许删除归属本人的歌曲；song_artist / play_record / favorite /
+    // playlist_song 都是 ON DELETE CASCADE，只需删 song 主表
     const QString sql = MySqlPool::buildSql(
-        QStringLiteral("DELETE FROM song WHERE song_id = ?"),
-        {songId});
+        QStringLiteral("DELETE FROM song WHERE song_id = ? AND owner_user_id = ?"),
+        {songId, userId});
 
     QString err;
-    return lease->exec(sql, &err);
+    if (!lease->exec(sql, &err)) {
+        return false;
+    }
+    // 受影响行数为 0 说明该歌不存在或不属于当前用户
+    return lease->affectedRows() > 0;
 }
 
 bool SongDao::addPlayRecord(int userId, int songId, int playedSeconds, bool completed)

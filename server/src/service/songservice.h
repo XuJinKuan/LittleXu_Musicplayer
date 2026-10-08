@@ -13,7 +13,7 @@ public:
     ServiceResult list(const QMap<QString, QString> &query);
     ServiceResult detail(int songId);
     ServiceResult addSong(const QJsonObject &req);
-    ServiceResult deleteSong(int songId);
+    ServiceResult deleteSong(int songId, int userId);
     ServiceResult play(const QJsonObject &req);
     ServiceResult monthlyReport(const QMap<QString, QString> &query);
 

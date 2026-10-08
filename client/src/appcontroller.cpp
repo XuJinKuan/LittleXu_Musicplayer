@@ -2,6 +2,7 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QSettings>
 #include <QUrlQuery>
 
 #include "apiclient.h"
@@ -28,6 +29,12 @@ AppController::AppController(QObject *parent)
     , m_songs(new SongListModel(this))
 {
     connect(m_api, &ApiClient::finished, this, &AppController::onApiFinished);
+
+    // 恢复上次使用的服务器地址（Android/桌面通用，QSettings 走各平台原生存储）
+    const QSettings settings;
+    const QString savedBase = settings.value(QStringLiteral("server/base")).toString();
+    if (!savedBase.isEmpty())
+        m_api->setBaseUrl(savedBase);
 }
 
 QString AppController::serverBase() const
@@ -37,10 +44,19 @@ QString AppController::serverBase() const
 
 void AppController::setServerBase(const QString &base)
 {
+    // 留空视为不修改，避免误清空地址导致所有请求失败
+    if (base.trimmed().isEmpty())
+        return;
+
     if (base.trimmed() == m_api->baseUrl())
         return;
 
     m_api->setBaseUrl(base);
+
+    // 持久化，下次启动自动恢复
+    QSettings settings;
+    settings.setValue(QStringLiteral("server/base"), base.trimmed());
+
     emit serverBaseChanged();
 }
 
@@ -238,6 +254,7 @@ void AppController::loadSongs(const QString &keyword, int page)
         page = 1;
 
     QUrlQuery query;
+    query.addQueryItem(QStringLiteral("userId"), QString::number(m_userId));
     const QString key = keyword.trimmed();
     if (!key.isEmpty())
         query.addQueryItem(QStringLiteral("keyword"), key);
@@ -350,6 +367,7 @@ void AppController::addSong(const QString &rid, const QString &title,
     setBusy(true);
 
     QJsonObject body;
+    body.insert(QStringLiteral("userId"), m_userId);
     body.insert(QStringLiteral("title"), title);
     body.insert(QStringLiteral("duration"), duration);
     body.insert(QStringLiteral("artist"), artist);
@@ -373,7 +391,8 @@ void AppController::deleteSong(int songId)
 
     setBusy(true);
 
-    m_api->del(QStringLiteral("deleteSong"), QStringLiteral("/api/songs/%1").arg(songId));
+    m_api->del(QStringLiteral("deleteSong"),
+               QStringLiteral("/api/songs/%1?userId=%2").arg(songId).arg(m_userId));
 }
 
 void AppController::playNext()

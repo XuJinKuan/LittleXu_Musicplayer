@@ -7,6 +7,8 @@ import QtQuick.Layouts
 Page {
     id: page
 
+    readonly property bool narrow: width < 600
+
     background: Rectangle { color: "transparent" }
 
     function doSearch() {
@@ -138,6 +140,17 @@ Page {
                     Label {
                         text: onlineDelegate.modelData.durationText
                         color: "#d4d4d4"
+                        visible: !page.narrow
+                    }
+
+                    Button {
+                        text: qsTr("添加")
+                        enabled: !app.busy
+                        onClicked: app.addSong(onlineDelegate.modelData.rid,
+                                               onlineDelegate.modelData.name,
+                                               onlineDelegate.modelData.artist,
+                                               onlineDelegate.modelData.album,
+                                               onlineDelegate.modelData.durationText)
                     }
 
                     Button {

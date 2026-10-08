@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick QuickControls2 Network Multimedia)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets Quick QuickControls2 Network Multimedia)
 
 qt_standard_project_setup()
 
@@ -28,6 +28,7 @@ target_include_directories(music_client PRIVATE
 )
 
 target_link_libraries(music_client PRIVATE
+    Qt6::Widgets
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::Network
@@ -64,3 +65,12 @@ qt_add_resources(music_client "qml"
 set_target_properties(music_client PROPERTIES
     WIN32_EXECUTABLE OFF
 )
+
+# Android 打包：自定义 manifest（INTERNET 权限 + 允许 HTTP 明文，连 cpolar 地址必需）
+if(ANDROID)
+    set_property(TARGET music_client PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+        ${CMAKE_CURRENT_SOURCE_DIR}/android)
+    set_property(TARGET music_client PROPERTY QT_ANDROID_MIN_SDK_VERSION 23)
+    set_property(TARGET music_client PROPERTY QT_ANDROID_TARGET_SDK_VERSION 33)
+    set_property(TARGET music_client PROPERTY QT_ANDROID_VERSION_CODE 2)
+endif()

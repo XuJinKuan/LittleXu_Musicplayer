@@ -14,7 +14,10 @@ Rectangle {
     property string currentTitle: ""
     property string currentArtist: ""
 
-    implicitHeight: 110
+    // 窄屏（手机）自适应：隐藏音量控件，歌曲信息单独占一行
+    readonly property bool narrow: width < 600
+
+    implicitHeight: narrow ? 96 : 110
     color: "#2d2d2d"
 
     function formatMs(ms) {
@@ -101,13 +104,28 @@ Rectangle {
             text: qsTr("暂无歌词")
         }
 
+        // 窄屏：歌曲信息独占一行（宽屏时信息在控制行内）
+        Label {
+            visible: bar.narrow
+            Layout.fillWidth: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            elide: Text.ElideRight
+            color: "#ffffff"
+            font.bold: true
+            text: bar.currentTitle.length > 0
+                  ? bar.currentTitle
+                    + (bar.currentArtist.length > 0 ? " · " + bar.currentArtist : "")
+                  : qsTr("未在播放")
+        }
+
         // 控制行
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
-            spacing: 16
+            Layout.leftMargin: bar.narrow ? 8 : 16
+            Layout.rightMargin: bar.narrow ? 8 : 16
+            spacing: bar.narrow ? 8 : 16
 
             // 上一首
             Image {
@@ -160,8 +178,9 @@ Rectangle {
                 }
             }
 
-            // 歌曲信息
+            // 歌曲信息（窄屏已在上方独立行显示，此处隐藏）
             ColumnLayout {
+                visible: !bar.narrow
                 Layout.preferredWidth: 200
                 spacing: 2
 
@@ -209,8 +228,9 @@ Rectangle {
                 font.pixelSize: 12
             }
 
-            // 音量图标：volume.png 静音 / voice_clicked.png 有声
+            // 音量图标：volume.png 静音 / voice_clicked.png 有声（窄屏隐藏）
             Image {
+                visible: !bar.narrow
                 Layout.preferredWidth: 24
                 Layout.preferredHeight: 24
                 source: volumeSlider.value <= 0 ? "qrc:/image/volume.png"
@@ -225,9 +245,10 @@ Rectangle {
                 }
             }
 
-            // 音量滑块
+            // 音量滑块（窄屏隐藏）
             Slider {
                 id: volumeSlider
+                visible: !bar.narrow
                 Layout.preferredWidth: 80
                 from: 0
                 to: 100
